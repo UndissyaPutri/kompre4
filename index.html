@@ -2684,9 +2684,19 @@ function exportToExcel(){
       const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
       XLSX.utils.book_append_sheet(wb, ws, sanitizeSheetName(OPP_DEFS[k].label));
     });
-    const now = new Date();
     const pad2 = n => String(n).padStart(2,'0');
-    const stamp = `${pad2(now.getDate())}-${pad2(now.getMonth()+1)}-${now.getFullYear()} ${pad2(now.getHours())}.${pad2(now.getMinutes())}`;
+    // Nama file pakai tanggal dari field "Tanggal Data" di filter (tanggal
+    // narik data), bukan tanggal sistem saat ini — fallback ke tanggal
+    // sistem kalau field-nya kosong/tidak valid.
+    const asOfRaw = ($('gfAsOfDate') && $('gfAsOfDate').value || '').trim();
+    const asOfMatch = asOfRaw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    let stamp;
+    if(asOfMatch){
+      stamp = `${pad2(+asOfMatch[1])}-${pad2(+asOfMatch[2])}-${asOfMatch[3].slice(2)}`;
+    } else {
+      const now = new Date();
+      stamp = `${pad2(now.getDate())}-${pad2(now.getMonth()+1)}-${String(now.getFullYear()).slice(2)}`;
+    }
     const filename = `Keterkaitan Pinjaman-Simpanan_${stamp}.xlsx`;
     XLSX.writeFile(wb, filename);
     showToast('File Excel berhasil diunduh!', 'success');
