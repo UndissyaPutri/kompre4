@@ -612,10 +612,8 @@ table.data-table td.empty{text-align:center}
               <option value="">Semua Kondisi</option>
               <option value="casaMemenuhi">CASA Memenuhi</option>
               <option value="trxAktif">Transaksi Aktif</option>
+              <option value="keduanya">Keduanya (CASA Memenuhi &amp; Transaksi Aktif)</option>
             </select>
-            <label class="gf-hint" style="display:flex;align-items:center;gap:6px;cursor:pointer">
-              <input type="checkbox" id="custFilterKeduanya"> Wajib keduanya (CASA Memenuhi &amp; Transaksi Aktif)
-            </label>
             <button class="btn btn-outline btn-sm" id="btnClearCustFilter">Reset</button>
           </div>
           <div class="table-wrap">
@@ -1825,7 +1823,6 @@ function applyCustFilters(){
   const kol = $('custFilterKol').value;
   const prod = $('custFilterProduk').value;
   const kondisi = $('custFilterKondisi').value;
-  const keduanya = $('custFilterKeduanya').checked;
   let list = getScopedCustomers();
   list = list.filter(c => {
     if(kol && String(c.worstKol) !== kol) return false;
@@ -1835,12 +1832,9 @@ function applyCustFilters(){
     if(prod === 'noMerchantEdc' && c.edc.length>0) return false;
     if(prod === 'noMerchantQris' && c.qris.length>0) return false;
     if(prod === 'hasOpp' && c.oppCount===0) return false;
-    if(keduanya){
-      if(!(c.casaMemenuhi && c.trxAktif)) return false;
-    } else {
-      if(kondisi === 'casaMemenuhi' && !c.casaMemenuhi) return false;
-      if(kondisi === 'trxAktif' && !c.trxAktif) return false;
-    }
+    if(kondisi === 'casaMemenuhi' && !c.casaMemenuhi) return false;
+    if(kondisi === 'trxAktif' && !c.trxAktif) return false;
+    if(kondisi === 'keduanya' && !(c.casaMemenuhi && c.trxAktif)) return false;
     if(q){
       const hay = `${c.nama} ${c.cif} ${c.loans.map(l=>l.noRekening).join(' ')}`.toLowerCase();
       if(!hay.includes(q)) return false;
@@ -2693,7 +2687,7 @@ function exportToExcel(){
     const now = new Date();
     const pad2 = n => String(n).padStart(2,'0');
     const stamp = `${pad2(now.getDate())}-${pad2(now.getMonth()+1)}-${now.getFullYear()} ${pad2(now.getHours())}.${pad2(now.getMinutes())}`;
-    const filename = `CustomerRelationshipDashboard_${stamp}.xlsx`;
+    const filename = `Keterkaitan Pinjaman-Simpanan_${stamp}.xlsx`;
     XLSX.writeFile(wb, filename);
     showToast('File Excel berhasil diunduh!', 'success');
   } catch(e){
@@ -2750,13 +2744,13 @@ document.querySelectorAll('.tab').forEach(t => {
     }
   });
 });
-['custSearch','custFilterKol','custFilterProduk','custFilterKondisi','custFilterKeduanya'].forEach(id => {
+['custSearch','custFilterKol','custFilterProduk','custFilterKondisi'].forEach(id => {
   $(id).addEventListener('input', applyCustFilters);
   $(id).addEventListener('change', applyCustFilters);
 });
 $('btnClearCustFilter').addEventListener('click', () => {
   $('custSearch').value=''; $('custFilterKol').value=''; $('custFilterProduk').value='';
-  $('custFilterKondisi').value=''; $('custFilterKeduanya').checked=false;
+  $('custFilterKondisi').value='';
   applyCustFilters();
 });
 $('gfKanwil').addEventListener('change', () => { refreshKancaOptions(); applyGlobalFilter(); });
