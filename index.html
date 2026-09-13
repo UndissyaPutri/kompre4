@@ -296,7 +296,7 @@ table.data-table .ctr{text-align:center}
 .detail-field{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px dashed var(--border)}
 .detail-field .lbl{color:var(--text-muted);font-size:12px;flex:0 0 45%}
 .detail-field .val{color:var(--text);font-size:12.5px;font-weight:500;text-align:right;word-break:break-word}
-/* RM Pengelola FT can list more than one name (comma-joined) — give it two
+/* RM Pengelola Simpanan can list more than one name (comma-joined) — give it two
    grid columns' width instead of one, so a longer list wraps within a wider
    box instead of bulging a single narrow column. */
 .detail-field-wide{grid-column:span 2}
@@ -519,12 +519,12 @@ table.data-table td.empty{text-align:center}
         <datalist id="gfUkerList"></datalist>
       </div>
       <div class="gf-pill">
-        <label>RM Pengelola Kredit</label>
+        <label>RM Pengelola Pinjaman</label>
         <input class="gf-combo-input" id="gfRm" list="gfRmList" placeholder="Semua RM" autocomplete="off">
         <datalist id="gfRmList"></datalist>
       </div>
       <div class="gf-pill">
-        <label>RM Pengelola FT</label>
+        <label>RM Pengelola Simpanan</label>
         <input class="gf-combo-input" id="gfRmFt" list="gfRmFtList" placeholder="Semua RM FT" autocomplete="off">
         <datalist id="gfRmFtList"></datalist>
       </div>
@@ -621,7 +621,7 @@ table.data-table td.empty{text-align:center}
                   <th class="sortable num" data-sort="totalBakiDebet">Baki Debet</th>
                   <th class="sortable num" data-sort="totalFunding">Total Funding</th>
                   <th class="sortable num" data-sort="casaToLoan" title="CASA to Loan: seberapa besar CASA (Tabungan+Giro) menutupi Outstanding (baki debet) pinjaman nasabah.">CASA to Loan ℹ️</th>
-                  <th>Produk Dimiliki</th>
+                  <th>Fasilitas Dimiliki</th>
                 </tr>
               </thead>
               <tbody id="custBody"></tbody>
@@ -677,21 +677,11 @@ table.data-table td.empty{text-align:center}
           </div>
         </div>
         <div class="panel-body">
-          <div id="kpiDplCard" style="max-width:340px;margin-bottom:16px"></div>
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:18px">
-            <div>
-              <div class="detail-section-title">Pinjaman</div>
-              <div id="priorityStatsPinjaman"></div>
-            </div>
-            <div>
-              <div class="detail-section-title">Simpanan (nasabah pinjaman ini saja)</div>
-              <div id="priorityStatsSimpanan"></div>
-            </div>
-          </div>
+          <div id="kpiDplCard" style="max-width:620px;margin-bottom:16px"></div>
           <div class="customer-hero" id="priorityBasisCard" style="padding:14px 20px;margin-bottom:18px">
             <div class="customer-hero-inner" id="priorityBasisContent"></div>
           </div>
-          <div class="detail-section-title">Ringkasan: Perlu Kunjungan vs Sehat</div>
+          <div class="detail-section-title">Ringkasan: Perlu Kunjungan vs CASA Memadai</div>
           <div class="opp-grid" id="priorityQuadGrid"></div>
           <div class="detail-section-title">Daftar Prioritas Pengelolaan</div>
           <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
@@ -705,7 +695,7 @@ table.data-table td.empty{text-align:center}
           <div class="table-wrap">
             <table class="data-table" id="priorityTable">
               <thead><tr>
-                <th>Nama Nasabah</th><th>No Rekening</th><th class="num">Baki Debet (OS)</th><th class="num">CASA to Loan</th><th>Status</th><th>RM Pengelola Kredit</th><th>RM Pengelola FT</th>
+                <th>Nama Nasabah</th><th>No Rekening</th><th class="num">Baki Debet (OS)</th><th class="num">CASA to Loan</th><th>Status</th><th>RM Pengelola Pinjaman</th><th>RM Pengelola Simpanan</th>
               </tr></thead>
               <tbody id="priorityBody"></tbody>
             </table>
@@ -1622,9 +1612,9 @@ function buildCustomers(){
    OPPORTUNITY CATEGORY DEFINITIONS
    ================================================================= */
 const OPP_DEFS = {
-  casaOptimal:       {tag:'CASA OPTIMAL', label:'CASA Optimal', owner:'SME + Validasi FT', sub:'Tidak ada kredit aktif, CASA (ratas ≥Rp100jt & freq ≥30x/bln, 12 bln) tervalidasi.', rec:'CASA sudah kuat & stabil 12 bulan, tawarkan fasilitas kredit baru (modal kerja/investasi).'},
-  trxOptimal:        {tag:'TRX OPTIMAL', label:'Trx Optimal', owner:'SME + Validasi FT', sub:'Tidak ada kredit aktif, transaksi kredit ≥Rp800jt/bln & CASA ≥Rp50jt (6 bln) tervalidasi.', rec:'Volume transaksi sudah tinggi 6 bulan terakhir, tawarkan fasilitas kredit baru (modal kerja/investasi).'},
-  crossSellMerchant: {tag:'MERCHANT', label:'Merchant', owner:'FT', sub:'CASA ratas ≥Rp100jt/bln & freq ≥100x/bln (6 bln), tapi EDC/QRIS belum lengkap.', rec:'Tawarkan EDC dan/atau QRIS yang belum dimiliki, pola transaksinya sudah setara merchant aktif.'},
+  casaOptimal:       {tag:'CASA OPTIMAL', label:'Pipeline Nasabah CASA Optimal', owner:'SME + Validasi FT', sub:'Tidak ada kredit aktif, CASA (ratas ≥Rp100jt & freq ≥30x/bln, 12 bln) tervalidasi.', rec:'Nasabah Simpanan BRI yang memiliki ratas saldo CASA Minimal Rp100 Juta selama 12 bulan dan memiliki frekuensi transaksi sebanyak 30 kali per bulan.'},
+  trxOptimal:        {tag:'TRX OPTIMAL', label:'Pipeline Nasabah Transaksi Optimal', owner:'SME + Validasi FT', sub:'Tidak ada kredit aktif, transaksi kredit ≥Rp800jt/bln & CASA ≥Rp50jt (6 bln) tervalidasi.', rec:'Nasabah dengan Transaksi kredit keseluruhan 6 bulan terakhir dengan ratas transaksi kredit bulanan minimum Rp800 Juta dan umur rekening simpanan lebih dari 12 bulan dan CASA minimum Rp50 Juta.'},
+  crossSellMerchant: {tag:'MERCHANT', label:'Pipeline Nasabah Merchant', owner:'FT', sub:'CASA ratas ≥Rp100jt/bln & freq ≥100x/bln (6 bln), tapi EDC/QRIS belum lengkap.', rec:'Nasabah Merchant BRI yang sudah dikurasi dengan parameter, ratas CASA di BRI selama 6 bulan terakhir Minimal sebesar Rp100 juta per bulan dan ratas frekuensi transaksinya 100x per bulan.'},
   quality:           {tag:'QUALITY', label:'Quality, Monitoring Lanjutan', owner:'SME', sub:'Kol 2, perlu monitoring sebelum memburuk ke Kol 3+.', rec:'Pantau komitmen pembayaran; koordinasi RM SME & FT agar tidak turun ke Kol 3.'},
   kolWatch:          {tag:'RECOVERY', label:'Recovery, Monitoring Kolektibilitas', owner:'SME', sub:'Kol 3 ke atas, belum masuk kategori cross-sell.', rec:'Monitoring pembayaran, koordinasi RM SME & FT untuk joint OTS, atau fokus recovery/restrukturisasi.'},
 };
@@ -1762,9 +1752,9 @@ function renderPinjamanSimpananMerchantStats(custs, ids, combineProspects){
   }
   const totalFunding = agg.tabungan.sum + agg.giro.sum + agg.deposito.sum;
   const pinjamanCards = [
-    {label:'Total Nasabah Pinjaman', value:custs.length, sub:'existing customer dari LW321', cls:'accent'},
-    {label:'Total Plafon Pinjaman', value:fmtRupiah(totalPlafon), sub:`${fmtNum(custs.reduce((s,c)=>s+c.loans.length,0))} fasilitas kredit dari ${fmtNum(custs.length)} nasabah`, cls:''},
-    {label:'Total Baki Debet', value:fmtRupiah(totalBaki), sub:'outstanding aktif', cls:''},
+    {label:'Total Nasabah Pinjaman', value:custs.length, sub:'', cls:'accent'},
+    {label:'Total Plafon Pinjaman', value:fmtRupiah(totalPlafon), sub:'', cls:''},
+    {label:'Total Baki Debet', value:fmtRupiah(totalBaki), sub:'', cls:''},
   ];
   const simpananCards = [
     {label:'Total Nasabah Simpanan', value:totalNasabahSimpanan, sub:combineProspects?'termasuk nasabah simpanan tanpa pinjaman':'dari nasabah pinjaman ini saja', cls:'accent'},
@@ -1792,12 +1782,21 @@ function renderPinjamanSimpananMerchantStats(custs, ids, combineProspects){
 function renderKpiDplCard(custs){
   const totalBaki = custs.reduce((s,c)=>s+c.totalBakiDebet,0);
   const totalCasa = custs.reduce((s,c)=>s+c.totalTabungan+c.totalGiro,0);
-  const actualPct = totalBaki > 0 ? (totalCasa / totalBaki * 100) : 0;
+  const totalDpk = custs.reduce((s,c)=>s+c.totalFunding,0);
+  const casaPct = totalBaki > 0 ? (totalCasa / totalBaki * 100) : 0;
+  const dpkPct = totalBaki > 0 ? (totalDpk / totalBaki * 100) : 0;
   $('kpiDplCard').innerHTML = `
-    <div class="stat-card">
-      <div class="stat-label">Rasio CASA to Loan</div>
-      <div class="stat-value">${fmtDec(actualPct)}%</div>
-      <div class="stat-sub">CASA ${fmtRupiah(totalCasa)} / Baki Debet ${fmtRupiah(totalBaki)}</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px">
+      <div class="stat-card">
+        <div class="stat-label">Rasio CASA to Loan</div>
+        <div class="stat-value">${fmtDec(casaPct)}%</div>
+        <div class="stat-sub">Simpanan (Tabungan+Giro) ${fmtRupiah(totalCasa)} / Baki Debet Pinjaman ${fmtRupiah(totalBaki)}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Rasio DPK to Loan</div>
+        <div class="stat-value">${fmtDec(dpkPct)}%</div>
+        <div class="stat-sub">DPK (Tabungan+Giro+Deposito) ${fmtRupiah(totalDpk)} / Baki Debet Pinjaman ${fmtRupiah(totalBaki)}</div>
+      </div>
     </div>
   `;
 }
@@ -1966,7 +1965,10 @@ function renderOpportunityRecommendations(c){
 }
 function renderRekeningKoranSection(c){
   const entries = c.rekeningKoran || [];
-  const rows = entries.map(e => `
+  const ev = c.pipelineEval || evaluateRekeningKoranPipelines(c);
+  const n = ev.monthsCovered || 0;
+  const isReal = entries.length>0 && entries.every(e => e.simulated===false);
+  const monthRows = entries.map(e => `
     <tr>
       <td>${rekKoranMonthLabel(e.year, e.month)}</td>
       <td class="num">${fmtNum(e.freq)}</td>
@@ -1974,11 +1976,16 @@ function renderRekeningKoranSection(c){
       <td class="num">${fmtRupiah(e.totalDebit)}</td>
       <td class="num">${fmtRupiah(e.avgDailyBalance)}</td>
     </tr>
-  `).join('') || '<tr><td colspan="5" class="empty">Belum ada data rekening koran untuk nasabah ini.</td></tr>';
-
-  const ev = c.pipelineEval || evaluateRekeningKoranPipelines(c);
-  const n = ev.monthsCovered || 0;
-  const isReal = entries.length>0 && entries.every(e => e.simulated===false);
+  `).join('');
+  const totalRow = monthRows ? `
+    <tr style="font-weight:700;border-top:2px solid var(--border,#ccc)">
+      <td>Total / Rata-rata (${ev.monthsCasaWindow||n} Bulan)</td>
+      <td class="num">${fmtDec(ev.avgFreq12||0)}x/bln</td>
+      <td class="num">${fmtRupiah(Math.round(ev.sumCredit12||0))}</td>
+      <td class="num">${fmtRupiah(Math.round(ev.sumDebit12||0))}</td>
+      <td class="num">${fmtRupiah(Math.round(ev.avgCasa12||0))}</td>
+    </tr>` : '';
+  const rows = (monthRows + totalRow) || '<tr><td colspan="5" class="empty">Belum ada data rekening koran untuk nasabah ini.</td></tr>';
 
   // CASA MEMENUHI / TRANSAKSI AKTIF — dua indikator sederhana pengganti
   // badge Pipeline SME lama, dihitung langsung di sini agar bekerja untuk
@@ -2000,7 +2007,7 @@ function renderRekeningKoranSection(c){
       </div>`;
   }
   const casaBadge = badge2('CASA MEMENUHI', casaApplicable, casaMemenuhi,
-    casaApplicable ? `(Tabungan+Giro) ${fmtRupiah(tabunganGiro)} / Baki Debet ${fmtRupiah(bakiDebet)} = ${fmtDec(casaRatio*100)}% (ambang ≥5%)` : 'Tidak ada pinjaman aktif');
+    casaApplicable ? `Simpanan ${fmtRupiah(tabunganGiro)} / Baki Debet Pinjaman ${fmtRupiah(bakiDebet)} = ${fmtDec(casaRatio*100)}% (ambang ≥5%)` : 'Tidak ada pinjaman aktif');
   const trxBadge = badge2('TRANSAKSI AKTIF', true, trxAktif,
     `Rata-rata ${fmtDec(ev.avgFreq12||0)}x/bulan (12 bulan${isReal?'':' simulasi'}), ambang >30x/bulan`);
 
@@ -2022,7 +2029,7 @@ function renderRekeningKoranSection(c){
     <div class="rekkoran-box">
       <div class="rekkoran-head">
         <div>
-          <strong>Rekening Koran / Mutasi, ${n} Bulan Terakhir${isReal ? '' : ' <span class="sim-tag">SIMULASI</span>'}</strong>
+          <strong>Rekening Koran${isReal ? '' : ' <span class="sim-tag">SIMULASI</span>'}</strong>
         </div>
       </div>
       <div class="table-wrap"><table class="data-table"><thead><tr><th>Bulan</th><th class="num">Freq Transaksi</th><th class="num">Total Kredit</th><th class="num">Total Debit</th><th class="num">Ratas Saldo (CASA)</th></tr></thead><tbody>${rows}</tbody></table></div>
@@ -2036,21 +2043,6 @@ function renderRekeningKoranSection(c){
           <div class="stat-label">Rata-rata Debit / Bulan</div>
           <div class="stat-value">${fmtRupiah(Math.round(ev.overallAvgDebit||0))}</div>
           <div class="stat-sub">${n} bulan${isReal?'':' simulasi'}</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Total Kredit (12 Bulan)</div>
-          <div class="stat-value">${fmtRupiah(Math.round(ev.sumCredit12||0))}</div>
-          <div class="stat-sub">Sum ${ev.monthsCasaWindow||0} bulan${isReal?'':' simulasi'}</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Total Debit (12 Bulan)</div>
-          <div class="stat-value">${fmtRupiah(Math.round(ev.sumDebit12||0))}</div>
-          <div class="stat-sub">Sum ${ev.monthsCasaWindow||0} bulan${isReal?'':' simulasi'}</div>
-        </div>
-        <div class="stat-card accent">
-          <div class="stat-label">Rata-rata Transaksi / Bulan (12 Bulan)</div>
-          <div class="stat-value">${fmtDec(ev.avgFreq12||0)}x</div>
-          <div class="stat-sub">Avg ${ev.monthsCasaWindow||0} bulan${isReal?'':' simulasi'}</div>
         </div>
       </div>
       ${partnerBlock}
@@ -2173,7 +2165,7 @@ function renderCustomerDetail(c){
             <div><div class="f-label">CIF</div><div class="f-value">${escapeHtml(c.cif)}</div></div>
             <div><div class="f-label">Unit Kerja</div><div class="f-value">${escapeHtml(c.uker)}</div></div>
             <div><div class="f-label">Kolektibilitas Terburuk</div><div class="f-value">${c.worstKol} - ${KOL_LABEL[c.worstKol]}</div></div>
-            <div><div class="f-label">RM Pengelola Kredit</div><div class="f-value">${escapeHtml(cleanPn(c.loans[0]?.pnPengelola))}</div></div>
+            <div><div class="f-label">RM Pengelola Pinjaman</div><div class="f-value">${escapeHtml(cleanPn(c.loans[0]?.pnPengelola))}</div></div>
             <div><div class="f-label" title="CASA to Loan: (Tabungan+Giro) dibagi Outstanding (baki debet) pinjaman.">CASA to Loan ℹ️</div><div class="f-value">${c.casaToLoan!=null ? fmtDec(c.casaToLoan*100)+'%' : '-'}</div></div>
           </div>
           <div class="product-pills">
@@ -2189,15 +2181,15 @@ function renderCustomerDetail(c){
       <div class="detail-section-title">Peluang Pengembangan: Rekomendasi</div>
       ${oppHtml}
       <div class="detail-section-title">Fasilitas Kredit (${c.loans.length})</div>
-      <div class="table-wrap"><table class="data-table"><thead><tr><th>No Rekening</th><th>Jenis</th><th>Kol</th><th class="num">Plafon</th><th class="num">Baki Debet</th><th class="num">Tunggakan</th><th class="ctr">Rate</th><th>Jatuh Tempo</th><th>RM Pengelola Kredit</th></tr></thead><tbody>${loansRows}</tbody></table></div>
+      <div class="table-wrap"><table class="data-table"><thead><tr><th>No Rekening</th><th>Jenis</th><th>Kol</th><th class="num">Plafon</th><th class="num">Baki Debet</th><th class="num">Tunggakan</th><th class="ctr">Rate</th><th>Jatuh Tempo</th><th>RM Pengelola Pinjaman</th></tr></thead><tbody>${loansRows}</tbody></table></div>
       <div class="detail-section-title">Tabungan (${c.tabungan.length})</div>
-      <div class="table-wrap"><table class="data-table"><thead><tr><th>No Rekening</th><th>Produk</th><th class="num">Saldo</th><th class="ctr">Tgl Buka</th><th>RM Pengelola FT</th></tr></thead><tbody>${tabunganRows}</tbody></table></div>
+      <div class="table-wrap"><table class="data-table"><thead><tr><th>No Rekening</th><th>Produk</th><th class="num">Saldo</th><th class="ctr">Tgl Buka</th><th>RM Pengelola Simpanan</th></tr></thead><tbody>${tabunganRows}</tbody></table></div>
       <div class="detail-section-title">Giro (${c.giro.length})</div>
-      <div class="table-wrap"><table class="data-table"><thead><tr><th>No Rekening</th><th>Produk</th><th class="num">Saldo</th><th class="ctr">Tgl Buka</th><th>RM Pengelola FT</th></tr></thead><tbody>${giroRows}</tbody></table></div>
+      <div class="table-wrap"><table class="data-table"><thead><tr><th>No Rekening</th><th>Produk</th><th class="num">Saldo</th><th class="ctr">Tgl Buka</th><th>RM Pengelola Simpanan</th></tr></thead><tbody>${giroRows}</tbody></table></div>
       <div class="detail-section-title">Deposito (${c.deposito.length}), dicocokkan berdasarkan nama (tanpa CIF)</div>
-      <div class="table-wrap"><table class="data-table"><thead><tr><th>No Rekening</th><th class="num">Nominal</th><th>Rate</th><th>Jatuh Tempo</th><th>RM Pengelola FT</th></tr></thead><tbody>${depositoRows}</tbody></table></div>
+      <div class="table-wrap"><table class="data-table"><thead><tr><th>No Rekening</th><th class="num">Nominal</th><th>Rate</th><th>Jatuh Tempo</th><th>RM Pengelola Simpanan</th></tr></thead><tbody>${depositoRows}</tbody></table></div>
       <div class="detail-section-title">Merchant EDC / QRIS (${c.edc.length + c.qris.length})</div>
-      <div class="table-wrap"><table class="data-table"><thead><tr><th>Tipe</th><th>Nama Merchant</th><th>MID</th><th class="num ctr">Transaksi</th><th class="num">Volume</th><th class="ctr">RM Pengelola FT</th></tr></thead><tbody>${merchantRows}</tbody></table></div>
+      <div class="table-wrap"><table class="data-table"><thead><tr><th>Tipe</th><th>Nama Merchant</th><th>MID</th><th class="num ctr">Transaksi</th><th class="num">Volume</th><th class="ctr">RM Pengelola Simpanan</th></tr></thead><tbody>${merchantRows}</tbody></table></div>
       <div class="detail-section-title">Rekening Koran, Pipeline SME (Ketentuan Ekspansi Kredit 2026)</div>
       ${renderRekeningKoranSection(c)}
       ${renderProductHoldingSection(c.cif)}
@@ -2210,13 +2202,14 @@ function renderCustomerDetail(c){
 const OPP_GRID_KEYS = Object.keys(OPP_DEFS).filter(k => k !== 'quality' && k !== 'kolWatch');
 function renderOppGrid(){
   computeOppCategories();
+  State.activeOpps = new Set();
   const grid = $('oppGrid');
   grid.innerHTML = OPP_GRID_KEYS.map(k => {
     const def = OPP_DEFS[k];
     const list = State.oppCategories[k];
     const isEmpty = list.length === 0;
     return `
-      <div class="opp-card ${isEmpty?'disabled':''}" data-opp="${k}" onclick="${isEmpty?'':`selectOpp('${k}')`}">
+      <div class="opp-card ${isEmpty?'disabled':''}" data-opp="${k}" onclick="${isEmpty?'':`toggleOppCard('${k}')`}">
         <div class="opp-icon">${def.tag}</div>
         <div class="opp-count">${list.length}</div>
         <div class="opp-label">${def.label}</div>
@@ -2225,8 +2218,86 @@ function renderOppGrid(){
     `;
   }).join('');
   const firstNonEmpty = OPP_GRID_KEYS.find(k => State.oppCategories[k].length > 0);
-  if(firstNonEmpty) selectOpp(firstNonEmpty);
+  if(firstNonEmpty) toggleOppCard(firstNonEmpty);
   else $('oppDetail').innerHTML = '<div class="opp-detail-empty">Tidak ada peluang bisnis yang terdeteksi dari data saat ini.</div>';
+}
+// Kartu peluang bisa dipilih lebih dari satu (multi-select). 1 kartu aktif
+// = tampilan detail seperti biasa (dengan filter/sort/search). 2-3 kartu
+// aktif sekaligus = tampilkan irisan nasabah/prospek yang memenuhi SEMUA
+// kategori terpilih (mis. CASA Optimal + Merchant, atau ketiganya sekaligus).
+function toggleOppCard(k){
+  if(!State.activeOpps) State.activeOpps = new Set();
+  if(State.activeOpps.has(k)) State.activeOpps.delete(k); else State.activeOpps.add(k);
+  document.querySelectorAll('#oppGrid .opp-card').forEach(el => el.classList.toggle('active', State.activeOpps.has(el.dataset.opp)));
+  const keys = OPP_GRID_KEYS.filter(kk => State.activeOpps.has(kk));
+  if(keys.length === 0){
+    $('oppPinjamanFilterWrap').style.display = 'none';
+    $('oppKolFilter').style.display = 'none';
+    $('oppDetail').innerHTML = '<div class="opp-detail-empty">Pilih kategori peluang di atas untuk menampilkan daftar nasabah.</div>';
+    return;
+  }
+  if(keys.length === 1) selectOpp(keys[0], true);
+  else { $('oppPinjamanFilterWrap').style.display = 'none'; $('oppKolFilter').style.display = 'none'; renderOppIntersection(keys); }
+}
+window.toggleOppCard = toggleOppCard;
+function reRenderOppSelection(resetPage){
+  const keys = OPP_GRID_KEYS.filter(k => State.activeOpps && State.activeOpps.has(k));
+  if(keys.length === 1) selectOpp(keys[0], resetPage);
+  else if(keys.length > 1) renderOppIntersection(keys);
+}
+function renderOppIntersection(keys){
+  const lists = keys.map(k => State.oppCategories[k]);
+  const cifSets = lists.map(list => new Set(list.map(e => e.cif)));
+  let commonCifs = [...cifSets[0]];
+  for(let i=1;i<cifSets.length;i++) commonCifs = commonCifs.filter(cif => cifSets[i].has(cif));
+  const q = ($('oppSearch').value || '').toLowerCase().trim();
+  const custByCif = new Map(getOppScopedCustomers().map(c => [c.cif, c]));
+  let items = commonCifs.map(cif => {
+    const c = custByCif.get(cif);
+    const rep = lists[0].find(e => e.cif === cif);
+    return {cif, nama: c ? c.nama : (rep ? rep.nama : cif), c, rep};
+  });
+  if(q) items = items.filter(it => `${it.nama||''} ${it.cif}`.toLowerCase().includes(q));
+  const labels = keys.map(k => OPP_DEFS[k].label).join(' + ');
+  const badges = keys.map(k => `<span class="badge-pill prod-yes">${escapeHtml(OPP_DEFS[k].tag)}</span>`).join(' ');
+  const entries = items.map(it => {
+    if(it.c){
+      const c = it.c;
+      return `
+      <div class="opp-entry">
+        <div class="opp-entry-head">
+          <span><a class="cust-link" href="javascript:void(0)" onclick="goToCustomerDetail('${escapeHtml(c.cif)}')">${escapeHtml(c.nama)}</a></span>
+          <span style="display:flex;gap:6px;align-items:center">${badges}</span>
+        </div>
+        <div class="detail-grid">
+          <div class="detail-field"><span class="lbl">CIF</span><span class="val">${escapeHtml(c.cif)}</span></div>
+          <div class="detail-field"><span class="lbl">Unit Kerja</span><span class="val">${escapeHtml(c.uker||'-')}</span></div>
+          <div class="detail-field"><span class="lbl">Baki Debet</span><span class="val">${fmtRupiah(c.totalBakiDebet)}</span></div>
+          <div class="detail-field"><span class="lbl">Total Simpanan</span><span class="val">${fmtRupiah(c.totalFunding)}</span></div>
+        </div>
+        <button class="btn btn-brand btn-sm" style="margin-top:8px" onclick="showRekeningKoranModal('${escapeHtml(c.cif)}')">Lihat Rekening Koran</button>
+      </div>`;
+    }
+    const p = it.rep || {cif:it.cif, nama:it.nama, ukerCode:'-', saldo:0};
+    return `
+      <div class="opp-entry">
+        <div class="opp-entry-head">
+          <span><a class="cust-link" href="javascript:void(0)" onclick="goToCustomerDetail('${escapeHtml(p.cif)}')">${escapeHtml(p.nama || '(tanpa nama)')}</a></span>
+          <span style="display:flex;gap:6px;align-items:center">${badges}</span>
+        </div>
+        <div class="detail-grid">
+          <div class="detail-field"><span class="lbl">CIF</span><span class="val">${escapeHtml(p.cif)}</span></div>
+          <div class="detail-field"><span class="lbl">Unit Kerja</span><span class="val">${escapeHtml(p.ukerCode || '-')}</span></div>
+          <div class="detail-field"><span class="lbl">Total Saldo</span><span class="val">${fmtRupiah(p.saldo||0)}</span></div>
+        </div>
+        <button class="btn btn-brand btn-sm" style="margin-top:8px" onclick="showRekeningKoranModal('${escapeHtml(p.cif)}')">Lihat Rekening Koran</button>
+      </div>`;
+  }).join('');
+  $('oppDetail').innerHTML = `
+    <div class="rec-note"><strong>Irisan ${escapeHtml(labels)}:</strong> Nasabah/prospek yang memenuhi seluruh kategori terpilih sekaligus.</div>
+    <div class="upload-hint" style="margin-bottom:10px">Menampilkan ${fmtNum(items.length)} nasabah/prospek yang memenuhi ${keys.length} kategori sekaligus.</div>
+    <div class="opp-entry-list">${entries || '<div class="opp-detail-empty">Tidak ada nasabah/prospek yang memenuhi seluruh kategori terpilih.</div>'}</div>
+  `;
 }
 function looksLikeBadanUsaha(nama){
   return /^(PT|CV|UD|PD|KOPERASI|FIRMA|YAYASAN|KSP|BUMDES)\b/i.test(cleanStr(nama));
@@ -2291,7 +2362,7 @@ function selectOpp(k, resetPinjamanPage=true){
           <div class="detail-field"><span class="lbl">Unit Kerja</span><span class="val">${escapeHtml(p.ukerCode || '-')}</span></div>
           <div class="detail-field"><span class="lbl">Total Saldo</span><span class="val">${fmtRupiah(p.saldo)}</span></div>
           ${rows}
-          <div class="detail-field detail-field-wide"><span class="lbl">RM Pengelola FT</span><span class="val">${escapeHtml((p.rmFt && p.rmFt.length) ? p.rmFt.join(', ') : '-')}</span></div>
+          <div class="detail-field detail-field-wide"><span class="lbl">RM Pengelola Simpanan</span><span class="val">${escapeHtml((p.rmFt && p.rmFt.length) ? p.rmFt.join(', ') : '-')}</span></div>
         </div>
         <button class="btn btn-brand btn-sm" style="margin-top:8px" onclick="showRekeningKoranModal('${escapeHtml(p.cif)}')">Lihat Rekening Koran</button>
         ${buildProspectOppNote(p, k)}
@@ -2324,8 +2395,8 @@ function selectOpp(k, resetPinjamanPage=true){
         <div class="detail-field"><span class="lbl">Unit Kerja</span><span class="val">${escapeHtml(c.uker)}</span></div>
         <div class="detail-field"><span class="lbl">Baki Debet</span><span class="val">${fmtRupiah(c.totalBakiDebet)}</span></div>
         <div class="detail-field"><span class="lbl">Total Funding</span><span class="val">${fmtRupiah(c.totalFunding)}</span></div>
-        <div class="detail-field detail-field-wide"><span class="lbl">RM Pengelola FT</span><span class="val">${escapeHtml((c.rmFundingList && c.rmFundingList.length) ? c.rmFundingList.join(', ') : '-')}</span></div>
-        <div class="detail-field"><span class="lbl">RM Pengelola Kredit</span><span class="val">${escapeHtml(cleanPn(c.loans[0]?.pnPengelola))}</span></div>
+        <div class="detail-field detail-field-wide"><span class="lbl">RM Pengelola Simpanan</span><span class="val">${escapeHtml((c.rmFundingList && c.rmFundingList.length) ? c.rmFundingList.join(', ') : '-')}</span></div>
+        <div class="detail-field"><span class="lbl">RM Pengelola Pinjaman</span><span class="val">${escapeHtml(cleanPn(c.loans[0]?.pnPengelola))}</span></div>
       </div>
       <button class="btn btn-brand btn-sm" style="margin-top:8px" onclick="showRekeningKoranModal('${escapeHtml(c.cif)}')">Lihat Rekening Koran</button>
       ${buildOppInsightNote(c, k)}
@@ -2342,16 +2413,16 @@ function growPinjamanOppPage(){
   selectOpp(State.activeOpp, false);
 }
 window.growPinjamanOppPage = growPinjamanOppPage;
-$('oppSearch').addEventListener('input', () => { if(State.activeOpp) selectOpp(State.activeOpp, true); });
-$('oppPinjamanJenisFilter').addEventListener('change', () => { if(OPP_LOAN_KEYS.includes(State.activeOpp)) selectOpp(State.activeOpp, true); });
-$('oppPinjamanSortFilter').addEventListener('change', () => { if(OPP_LOAN_KEYS.includes(State.activeOpp)) selectOpp(State.activeOpp, false); });
+$('oppSearch').addEventListener('input', () => reRenderOppSelection(true));
+$('oppPinjamanJenisFilter').addEventListener('change', () => { if(OPP_LOAN_KEYS.includes(State.activeOpp)) reRenderOppSelection(true); });
+$('oppPinjamanSortFilter').addEventListener('change', () => { if(OPP_LOAN_KEYS.includes(State.activeOpp)) reRenderOppSelection(false); });
 $('oppKolFilter').addEventListener('change', () => { if(State.activeOpp==='kolWatch') selectOpp('kolWatch', true); });
 /* ===================================================================
    PRIORITAS KUNJUNGAN — CASA to Loan
    ================================================================= */
 const QUAD_DEFS = {
   needsVisit: {label:'Perlu Kunjungan', color:'#d64545', badgeCls:'k-5', sub:'CASA to Loan di bawah threshold. Diurutkan dari OS fasilitas terbesar.'},
-  sehat:      {label:'Sehat',           color:'#0a9d6e', badgeCls:'k-1', sub:'CASA to Loan sudah di atas threshold. Maintain & deepen relationship.'},
+  sehat:      {label:'CASA Memadai',    color:'#0a9d6e', badgeCls:'k-1', sub:'CASA to Loan sudah di atas threshold. Maintain & deepen relationship.'},
 };
 const QUAD_COLOR = {needsVisit:'#d64545', sehat:'#0a9d6e'};
 function percentile(sortedArr, p){
@@ -2437,7 +2508,6 @@ function renderPriorityTab(){
   State.activePriorityQuad = null;
   renderPriorityTable();
   $('badgePriority').textContent = State.priority.quadCounts.needsVisit;
-  renderPinjamanSimpananMerchantStats(getScopedCustomers(), {pinjaman:'priorityStatsPinjaman', simpanan:'priorityStatsSimpanan'}, false);
   renderKpiDplCard(getScopedCustomers());
 }
 function renderPriorityBasisCard(){
@@ -2447,7 +2517,7 @@ function renderPriorityBasisCard(){
     <div class="cname" style="font-size:16px">Default: &lt; ${fmtDec(p.p25Cov*100)}%</div>
     <div class="customer-hero-grid" style="margin-top:10px">
       <div><div class="f-label">Perlu Kunjungan</div><div class="f-value">CASA to Loan &lt; ${fmtDec(p.p25Cov*100)}%</div></div>
-      <div><div class="f-label">Sehat</div><div class="f-value">CASA to Loan ≥ ${fmtDec(p.p25Cov*100)}%</div></div>
+      <div><div class="f-label">CASA Memadai</div><div class="f-value">CASA to Loan ≥ ${fmtDec(p.p25Cov*100)}%</div></div>
     </div>
   `;
 }
@@ -2573,8 +2643,8 @@ function exportToExcel(){
         ? list.map(p => [p.nama, p.cif, p.produk.join(', '), p.saldo, p.openDt, p.ukerCode, p.everHadLoan ? 'Kredit lunas/tidak aktif' : 'Belum pernah kredit'])
         : list.map(c => [c.nama, c.cif, c.uker, c.worstKol, c.totalBakiDebet, c.totalFunding, cleanPn(c.loans[0]?.pnPengelola)]);
       const header = isLoanShape
-        ? ['Nama','CIF','Produk Dimiliki','Saldo/Funding','Tanggal Buka','Kode Unit Kerja','Status Kredit']
-        : ['Nama','CIF','Unit Kerja','Kol','Baki Debet','Total Funding','RM Pengelola Kredit'];
+        ? ['Nama','CIF','Fasilitas Dimiliki','Saldo/Funding','Tanggal Buka','Kode Unit Kerja','Status Kredit']
+        : ['Nama','CIF','Unit Kerja','Kol','Baki Debet','Total Funding','RM Pengelola Pinjaman'];
       const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
       XLSX.utils.book_append_sheet(wb, ws, sanitizeSheetName(OPP_DEFS[k].label));
     });
