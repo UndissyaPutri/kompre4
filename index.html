@@ -607,6 +607,9 @@ table.data-table td.empty{text-align:center}
               <option value="noMerchantEdc">Belum punya EDC</option>
               <option value="noMerchantQris">Belum punya QRIS</option>
               <option value="hasOpp">Punya Peluang Pengembangan</option>
+              <option value="casaMemenuhi">CASA Memenuhi</option>
+              <option value="trxAktif">Transaksi Aktif</option>
+              <option value="casaMemenuhiDanTrxAktif">CASA Memenuhi &amp; Transaksi Aktif (Keduanya) — kandidat suplesi</option>
             </select>
             <button class="btn btn-outline btn-sm" id="btnClearCustFilter">Reset</button>
           </div>
@@ -1582,6 +1585,10 @@ function buildCustomers(){
     ].filter(v => v && v !== '-'))];
     c.rekeningKoran = lookupRealRekeningKoran(c.nama) || generateDummyRekeningKoran(c.cif, c.totalFunding);
     c.pipelineEval = evaluateRekeningKoranPipelines(c);
+    // CASA MEMENUHI / TRANSAKSI AKTIF — sama seperti badge di Rekening Koran,
+    // dihitung sekali di sini agar bisa dipakai untuk filter di tabel nasabah.
+    c.casaMemenuhi = c.totalBakiDebet > 0 && (c.casaToLoan||0) >= 0.05;
+    c.trxAktif = (c.pipelineEval.avgFreq12||0) > 30;
     const opp = [];
     if(c.worstKol === 1){
       if(c.pipelineEval.merchant && (c.edc.length===0 || c.qris.length===0)) opp.push('crossSellMerchant');
@@ -1612,9 +1619,9 @@ function buildCustomers(){
    OPPORTUNITY CATEGORY DEFINITIONS
    ================================================================= */
 const OPP_DEFS = {
-  casaOptimal:       {tag:'CASA OPTIMAL', label:'Pipeline Nasabah CASA Optimal', owner:'SME + Validasi FT', sub:'Tidak ada kredit aktif, CASA (ratas ≥Rp100jt & freq ≥30x/bln, 12 bln) tervalidasi.', rec:'Nasabah Simpanan BRI yang memiliki ratas saldo CASA Minimal Rp100 Juta selama 12 bulan dan memiliki frekuensi transaksi sebanyak 30 kali per bulan.'},
-  trxOptimal:        {tag:'TRX OPTIMAL', label:'Pipeline Nasabah Transaksi Optimal', owner:'SME + Validasi FT', sub:'Tidak ada kredit aktif, transaksi kredit ≥Rp800jt/bln & CASA ≥Rp50jt (6 bln) tervalidasi.', rec:'Nasabah dengan Transaksi kredit keseluruhan 6 bulan terakhir dengan ratas transaksi kredit bulanan minimum Rp800 Juta dan umur rekening simpanan lebih dari 12 bulan dan CASA minimum Rp50 Juta.'},
-  crossSellMerchant: {tag:'MERCHANT', label:'Pipeline Nasabah Merchant', owner:'FT', sub:'CASA ratas ≥Rp100jt/bln & freq ≥100x/bln (6 bln), tapi EDC/QRIS belum lengkap.', rec:'Nasabah Merchant BRI yang sudah dikurasi dengan parameter, ratas CASA di BRI selama 6 bulan terakhir Minimal sebesar Rp100 juta per bulan dan ratas frekuensi transaksinya 100x per bulan.'},
+  casaOptimal:       {tag:'CASA OPTIMAL', label:'Pipeline Nasabah CASA Optimal', owner:'SME + Validasi FT', sub:'', rec:'Nasabah Simpanan BRI yang memiliki ratas saldo CASA Minimal Rp100 Juta selama 12 bulan dan memiliki frekuensi transaksi sebanyak 30 kali per bulan.'},
+  trxOptimal:        {tag:'TRX OPTIMAL', label:'Pipeline Nasabah Transaksi Optimal', owner:'SME + Validasi FT', sub:'', rec:'Nasabah dengan Transaksi kredit keseluruhan 6 bulan terakhir dengan ratas transaksi kredit bulanan minimum Rp800 Juta dan umur rekening simpanan lebih dari 12 bulan dan CASA minimum Rp50 Juta.'},
+  crossSellMerchant: {tag:'MERCHANT', label:'Pipeline Nasabah Merchant', owner:'FT', sub:'', rec:'Nasabah Merchant BRI yang sudah dikurasi dengan parameter, ratas CASA di BRI selama 6 bulan terakhir Minimal sebesar Rp100 juta per bulan dan ratas frekuensi transaksinya 100x per bulan.'},
   quality:           {tag:'QUALITY', label:'Quality, Monitoring Lanjutan', owner:'SME', sub:'Kol 2, perlu monitoring sebelum memburuk ke Kol 3+.', rec:'Pantau komitmen pembayaran; koordinasi RM SME & FT agar tidak turun ke Kol 3.'},
   kolWatch:          {tag:'RECOVERY', label:'Recovery, Monitoring Kolektibilitas', owner:'SME', sub:'Kol 3 ke atas, belum masuk kategori cross-sell.', rec:'Monitoring pembayaran, koordinasi RM SME & FT untuk joint OTS, atau fokus recovery/restrukturisasi.'},
 };
@@ -1757,11 +1764,11 @@ function renderPinjamanSimpananMerchantStats(custs, ids, combineProspects){
     {label:'Total Baki Debet', value:fmtRupiah(totalBaki), sub:'', cls:''},
   ];
   const simpananCards = [
-    {label:'Total Nasabah Simpanan', value:totalNasabahSimpanan, sub:combineProspects?'termasuk nasabah simpanan tanpa pinjaman':'dari nasabah pinjaman ini saja', cls:'accent'},
-    {label:'Total Simpanan', value:fmtRupiah(totalFunding), sub:'tabungan, giro, deposito', cls:'success'},
-    {label:'Tabungan', value:fmtRupiah(agg.tabungan.sum), sub:`${fmtNum(agg.tabungan.count)} rekening, satu nasabah bisa punya lebih dari satu rekening`, cls:''},
-    {label:'Giro', value:fmtRupiah(agg.giro.sum), sub:`${fmtNum(agg.giro.count)} rekening`, cls:''},
-    {label:'Deposito', value:fmtRupiah(agg.deposito.sum), sub:`${fmtNum(agg.deposito.count)} rekening`, cls:''},
+    {label:'Total Nasabah Simpanan', value:totalNasabahSimpanan, sub:'', cls:'accent'},
+    {label:'Total Simpanan', value:fmtRupiah(totalFunding), sub:'', cls:'success'},
+    {label:'Tabungan', value:fmtRupiah(agg.tabungan.sum), sub:'', cls:''},
+    {label:'Giro', value:fmtRupiah(agg.giro.sum), sub:'', cls:''},
+    {label:'Deposito', value:fmtRupiah(agg.deposito.sum), sub:'', cls:''},
   ];
   const merchantCards = [
     {label:'Total Nasabah Merchant', value:totalNasabahMerchantCombined, sub:'punya EDC dan/atau QRIS', cls:'accent'},
@@ -1821,6 +1828,9 @@ function applyCustFilters(){
     if(prod === 'noMerchantEdc' && c.edc.length>0) return false;
     if(prod === 'noMerchantQris' && c.qris.length>0) return false;
     if(prod === 'hasOpp' && c.oppCount===0) return false;
+    if(prod === 'casaMemenuhi' && !c.casaMemenuhi) return false;
+    if(prod === 'trxAktif' && !c.trxAktif) return false;
+    if(prod === 'casaMemenuhiDanTrxAktif' && !(c.casaMemenuhi && c.trxAktif)) return false;
     if(q){
       const hay = `${c.nama} ${c.cif} ${c.loans.map(l=>l.noRekening).join(' ')}`.toLowerCase();
       if(!hay.includes(q)) return false;
@@ -2210,10 +2220,8 @@ function renderOppGrid(){
     const isEmpty = list.length === 0;
     return `
       <div class="opp-card ${isEmpty?'disabled':''}" data-opp="${k}" onclick="${isEmpty?'':`toggleOppCard('${k}')`}">
-        <div class="opp-icon">${def.tag}</div>
         <div class="opp-count">${list.length}</div>
         <div class="opp-label">${def.label}</div>
-        <div class="opp-sub">${def.sub}</div>
       </div>
     `;
   }).join('');
@@ -2259,7 +2267,7 @@ function renderOppIntersection(keys){
   });
   if(q) items = items.filter(it => `${it.nama||''} ${it.cif}`.toLowerCase().includes(q));
   const labels = keys.map(k => OPP_DEFS[k].label).join(' + ');
-  const badges = keys.map(k => `<span class="badge-pill prod-yes">${escapeHtml(OPP_DEFS[k].tag)}</span>`).join(' ');
+  const badges = '';
   const entries = items.map(it => {
     if(it.c){
       const c = it.c;
@@ -2421,7 +2429,7 @@ $('oppKolFilter').addEventListener('change', () => { if(State.activeOpp==='kolWa
    PRIORITAS KUNJUNGAN — CASA to Loan
    ================================================================= */
 const QUAD_DEFS = {
-  needsVisit: {label:'Perlu Kunjungan', color:'#d64545', badgeCls:'k-5', sub:'CASA to Loan di bawah threshold. Diurutkan dari OS fasilitas terbesar.'},
+  needsVisit: {label:'Perlu Kunjungan', color:'#d64545', badgeCls:'k-5', sub:'CASA to Loan di bawah threshold. Diurutkan dari saldo (OS) terkecil & next payment date terdekat.'},
   sehat:      {label:'CASA Memadai',    color:'#0a9d6e', badgeCls:'k-1', sub:'CASA to Loan sudah di atas threshold. Maintain & deepen relationship.'},
 };
 const QUAD_COLOR = {needsVisit:'#d64545', sehat:'#0a9d6e'};
@@ -2439,6 +2447,21 @@ function percentile(sortedArr, p){
 // gabungan semua fasilitasnya) dan ditampilkan sama untuk tiap baris nasabah
 // yang sama, karena rasio ini melekat pada relationship nasabah, bukan per
 // fasilitas.
+// Parser tanggal longgar untuk NEXT_PMT_DATE / TGL JATUH TEMPO — menerima
+// serial Excel (angka), format ISO (YYYY-MM-DD), atau DD/MM/YYYY. Mengembalikan
+// timestamp yang bisa dibandingkan, atau null kalau tidak bisa di-parse.
+function parseLooseDate(v){
+  if(v == null || v === '') return null;
+  if(typeof v === 'number' && isFinite(v)) return Math.round((v - 25569) * 86400000);
+  const s = String(v).trim();
+  if(!s) return null;
+  let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if(m) return new Date(+m[1], +m[2]-1, +m[3]).getTime();
+  m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+  if(m) return new Date(+m[3], +m[2]-1, +m[1]).getTime();
+  const t = Date.parse(s);
+  return isNaN(t) ? null : t;
+}
 function computePriorityData(){
   State.customers.forEach(c => { c.priorityQuad = null; });
   const custs = getScopedCustomers();
@@ -2454,7 +2477,12 @@ function computePriorityData(){
   });
   list.sort((a,b) => {
     if(a.quad !== b.quad) return a.quad === 'needsVisit' ? -1 : 1;
-    return b.loan._baki - a.loan._baki;
+    if(a.loan._baki !== b.loan._baki) return a.loan._baki - b.loan._baki; // saldo (OS) terkecil dulu
+    const da = parseLooseDate(a.loan.nextPmtDate), db = parseLooseDate(b.loan.nextPmtDate);
+    if(da == null && db == null) return 0;
+    if(da == null) return 1;
+    if(db == null) return -1;
+    return da - db; // next payment date paling cepat dulu
   });
   const quadCounts = {needsVisit:0, sehat:0};
   list.forEach(r => quadCounts[r.quad]++);
@@ -2619,19 +2647,23 @@ function exportToExcel(){
       c.nama, c.cif, c.uker, c.worstKol, c.loans.length, c.totalPlafon, c.totalBakiDebet, c.totalTunggakan,
       c.tabungan.length, c.totalTabungan, c.giro.length, c.totalGiro, c.deposito.length, c.totalDeposito,
       c.totalFunding, c.edc.length+c.qris.length, c.totalMerchantVolume,
-      c.casaToLoan!=null ? +(c.casaToLoan*100).toFixed(2) : '', c.oppCount, c.opportunities.map(k=>OPP_DEFS[k].label).join('; ')
+      c.casaToLoan!=null ? +(c.casaToLoan*100).toFixed(2) : '',
+      c.totalBakiDebet>0 ? +((c.totalFunding/c.totalBakiDebet)*100).toFixed(2) : '',
+      c.casaMemenuhi ? 'Ya' : 'Tidak', c.trxAktif ? 'Ya' : 'Tidak',
+      c.oppCount, c.opportunities.map(k=>OPP_DEFS[k].label).join('; ')
     ]);
     const summaryHeader = ['Nama Nasabah','CIF','Unit Kerja','Kol Terburuk','Jml Fasilitas','Total Plafon','Total Baki Debet','Total Tunggakan',
       'Jml Tabungan','Saldo Tabungan','Jml Giro','Saldo Giro','Jml Deposito','Nominal Deposito','Total Funding','Jml Merchant','Volume Merchant',
-      'CASA to Loan (%)','Jml Peluang','Detail Peluang'];
+      'CASA to Loan (%)','DPK to Loan (%)','CASA Memenuhi','Transaksi Aktif','Jml Peluang','Detail Peluang'];
     const wsSummary = XLSX.utils.aoa_to_sheet([summaryHeader, ...summaryRows]);
     wsSummary['!cols'] = summaryHeader.map(h=>({wch:Math.max(14,h.length+2)}));
     XLSX.utils.book_append_sheet(wb, wsSummary, 'Profil Nasabah');
     computePriorityData();
     const priorityRows = (State.priority?.list || []).map(r => [
-      r.c.nama, r.c.cif, r.loan.noRekening, r.c.uker, r.loan._baki, +(r.cov*100).toFixed(2), QUAD_DEFS[r.quad].label
+      r.c.nama, r.c.cif, r.loan.noRekening, r.c.uker, r.loan._baki, +(r.cov*100).toFixed(2), QUAD_DEFS[r.quad].label,
+      cleanPn(r.loan.pnPengelola), (r.c.rmFundingList && r.c.rmFundingList.length ? r.c.rmFundingList.join(', ') : '-')
     ]);
-    const priorityHeader = ['Nama Nasabah','CIF','No Rekening','Unit Kerja','Baki Debet','CASA to Loan (%)','Status'];
+    const priorityHeader = ['Nama Nasabah','CIF','No Rekening','Unit Kerja','Baki Debet','CASA to Loan (%)','Status','RM Pengelola Pinjaman','RM Pengelola Simpanan'];
     const wsPriority = XLSX.utils.aoa_to_sheet([priorityHeader, ...priorityRows]);
     wsPriority['!cols'] = priorityHeader.map(h=>({wch:Math.max(14,h.length+2)}));
     XLSX.utils.book_append_sheet(wb, wsPriority, 'Prioritas Pengelolaan');
