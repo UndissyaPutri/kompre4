@@ -687,7 +687,7 @@ table.data-table td.empty{text-align:center}
           <div class="customer-hero" id="priorityBasisCard" style="padding:14px 20px;margin-bottom:18px">
             <div class="customer-hero-inner" id="priorityBasisContent"></div>
           </div>
-          <div class="detail-section-title">Ringkasan: Perlu Kunjungan vs CASA Memadai</div>
+          <div class="detail-section-title">Ringkasan CASA to Loan</div>
           <div class="opp-grid" id="priorityQuadGrid"></div>
           <div class="detail-section-title">Daftar Prioritas Pengelolaan</div>
           <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
@@ -2192,7 +2192,7 @@ function renderCustomerDetail(c){
           </div>
         </div>
       </div>
-      <div class="detail-section-title">Peluang Pengembangan: Rekomendasi</div>
+      <div class="detail-section-title">Rekomendasi</div>
       ${oppHtml}
       <div class="detail-section-title">Fasilitas Kredit (${c.loans.length})</div>
       <div class="table-wrap"><table class="data-table"><thead><tr><th>No Rekening</th><th>Jenis</th><th>Kol</th><th class="num">Plafon</th><th class="num">Baki Debet</th><th class="num">Tunggakan</th><th class="ctr">Rate</th><th>Jatuh Tempo</th><th>RM Pengelola Pinjaman</th></tr></thead><tbody>${loansRows}</tbody></table></div>
@@ -2204,7 +2204,7 @@ function renderCustomerDetail(c){
       <div class="table-wrap"><table class="data-table"><thead><tr><th>No Rekening</th><th class="num">Nominal</th><th>Rate</th><th>Jatuh Tempo</th><th>RM Pengelola Simpanan</th></tr></thead><tbody>${depositoRows}</tbody></table></div>
       <div class="detail-section-title">Merchant EDC / QRIS (${c.edc.length + c.qris.length})</div>
       <div class="table-wrap"><table class="data-table"><thead><tr><th>Tipe</th><th>Nama Merchant</th><th>MID</th><th class="num ctr">Transaksi</th><th class="num">Volume</th><th class="ctr">RM Pengelola Simpanan</th></tr></thead><tbody>${merchantRows}</tbody></table></div>
-      <div class="detail-section-title">Rekening Koran, Pipeline SME (Ketentuan Ekspansi Kredit 2026)</div>
+      <div class="detail-section-title">Rekening Koran</div>
       ${renderRekeningKoranSection(c)}
       ${renderProductHoldingSection(c.cif)}
     </div>
