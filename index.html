@@ -600,17 +600,22 @@ table.data-table td.empty{text-align:center}
             </div>
             <select class="select" id="custFilterKol"><option value="">Semua Kolektibilitas</option><option value="1">Kol 1</option><option value="2">Kol 2</option><option value="3">Kol 3</option><option value="4">Kol 4</option><option value="5">Kol 5</option></select>
             <select class="select" id="custFilterProduk">
-              <option value="">Semua Produk</option>
+              <option value="">Semua Fasilitas</option>
               <option value="noTabungan">Belum punya Tabungan</option>
               <option value="noGiro">Belum punya Giro</option>
               <option value="noDeposito">Belum punya Deposito</option>
               <option value="noMerchantEdc">Belum punya EDC</option>
               <option value="noMerchantQris">Belum punya QRIS</option>
               <option value="hasOpp">Punya Peluang Pengembangan</option>
+            </select>
+            <select class="select" id="custFilterKondisi">
+              <option value="">Semua Kondisi</option>
               <option value="casaMemenuhi">CASA Memenuhi</option>
               <option value="trxAktif">Transaksi Aktif</option>
-              <option value="casaMemenuhiDanTrxAktif">CASA Memenuhi &amp; Transaksi Aktif (Keduanya) — kandidat suplesi</option>
             </select>
+            <label class="gf-hint" style="display:flex;align-items:center;gap:6px;cursor:pointer">
+              <input type="checkbox" id="custFilterKeduanya"> Wajib keduanya (CASA Memenuhi &amp; Transaksi Aktif)
+            </label>
             <button class="btn btn-outline btn-sm" id="btnClearCustFilter">Reset</button>
           </div>
           <div class="table-wrap">
@@ -1771,14 +1776,14 @@ function renderPinjamanSimpananMerchantStats(custs, ids, combineProspects){
     {label:'Deposito', value:fmtRupiah(agg.deposito.sum), sub:'', cls:''},
   ];
   const merchantCards = [
-    {label:'Total Nasabah Merchant', value:totalNasabahMerchantCombined, sub:'punya EDC dan/atau QRIS', cls:'accent'},
-    {label:'EDC', value:fmtRupiah(agg.edc.sum), sub:`${fmtNum(agg.edc.count)} merchant · ${fmtNum(agg.edc.trx)} akumulasi transaksi`, cls:''},
-    {label:'QRIS', value:fmtRupiah(agg.qris.sum), sub:`${fmtNum(agg.qris.count)} merchant · ${fmtNum(agg.qris.trx)} akumulasi transaksi`, cls:''},
+    {label:'Total Nasabah Merchant', value:totalNasabahMerchantCombined, sub:'', cls:'accent'},
+    {label:'EDC', value:fmtRupiah(agg.edc.sum), sub:'', cls:''},
+    {label:'QRIS', value:fmtRupiah(agg.qris.sum), sub:'', cls:''},
   ];
   const renderTable = list => `
     <div class="table-wrap"><table class="data-table">
       <tbody>
-        ${list.map(c => `<tr><td>${c.label}</td><td class="num">${typeof c.value==='number' ? fmtNum(c.value) : c.value}</td><td style="color:var(--text-muted);font-size:12px">${c.sub}</td></tr>`).join('')}
+        ${list.map(c => `<tr><td>${c.label}</td><td class="num">${typeof c.value==='number' ? fmtNum(c.value) : c.value}</td></tr>`).join('')}
       </tbody>
     </table></div>
   `;
@@ -1819,6 +1824,8 @@ function applyCustFilters(){
   const q = $('custSearch').value.toLowerCase().trim();
   const kol = $('custFilterKol').value;
   const prod = $('custFilterProduk').value;
+  const kondisi = $('custFilterKondisi').value;
+  const keduanya = $('custFilterKeduanya').checked;
   let list = getScopedCustomers();
   list = list.filter(c => {
     if(kol && String(c.worstKol) !== kol) return false;
@@ -1828,9 +1835,12 @@ function applyCustFilters(){
     if(prod === 'noMerchantEdc' && c.edc.length>0) return false;
     if(prod === 'noMerchantQris' && c.qris.length>0) return false;
     if(prod === 'hasOpp' && c.oppCount===0) return false;
-    if(prod === 'casaMemenuhi' && !c.casaMemenuhi) return false;
-    if(prod === 'trxAktif' && !c.trxAktif) return false;
-    if(prod === 'casaMemenuhiDanTrxAktif' && !(c.casaMemenuhi && c.trxAktif)) return false;
+    if(keduanya){
+      if(!(c.casaMemenuhi && c.trxAktif)) return false;
+    } else {
+      if(kondisi === 'casaMemenuhi' && !c.casaMemenuhi) return false;
+      if(kondisi === 'trxAktif' && !c.trxAktif) return false;
+    }
     if(q){
       const hay = `${c.nama} ${c.cif} ${c.loans.map(l=>l.noRekening).join(' ')}`.toLowerCase();
       if(!hay.includes(q)) return false;
@@ -2740,12 +2750,13 @@ document.querySelectorAll('.tab').forEach(t => {
     }
   });
 });
-['custSearch','custFilterKol','custFilterProduk'].forEach(id => {
+['custSearch','custFilterKol','custFilterProduk','custFilterKondisi','custFilterKeduanya'].forEach(id => {
   $(id).addEventListener('input', applyCustFilters);
   $(id).addEventListener('change', applyCustFilters);
 });
 $('btnClearCustFilter').addEventListener('click', () => {
   $('custSearch').value=''; $('custFilterKol').value=''; $('custFilterProduk').value='';
+  $('custFilterKondisi').value=''; $('custFilterKeduanya').checked=false;
   applyCustFilters();
 });
 $('gfKanwil').addEventListener('change', () => { refreshKancaOptions(); applyGlobalFilter(); });
