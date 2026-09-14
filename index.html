@@ -1800,12 +1800,12 @@ function renderKpiDplCard(custs){
       <div class="stat-card">
         <div class="stat-label">Rasio CASA to Loan</div>
         <div class="stat-value">${fmtDec(casaPct)}%</div>
-        <div class="stat-sub">Simpanan (Tabungan+Giro) ${fmtRupiah(totalCasa)} / Baki Debet Pinjaman ${fmtRupiah(totalBaki)}</div>
+        <div class="stat-sub">CASA ${fmtRupiah(totalCasa)} / Baki Debet Pinjaman ${fmtRupiah(totalBaki)}</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">Rasio DPK to Loan</div>
         <div class="stat-value">${fmtDec(dpkPct)}%</div>
-        <div class="stat-sub">DPK (Tabungan+Giro+Deposito) ${fmtRupiah(totalDpk)} / Baki Debet Pinjaman ${fmtRupiah(totalBaki)}</div>
+        <div class="stat-sub">Dana Pihak Ketiga ${fmtRupiah(totalDpk)} / Baki Debet Pinjaman ${fmtRupiah(totalBaki)}</div>
       </div>
     </div>
   `;
@@ -1948,7 +1948,7 @@ function renderOpportunityRecommendations(c){
   const notes = [];
   if(kol >= 3){
     const kolLabel = KOL_LABEL[kol] || 'bermasalah';
-    notes.push(`<div class="rec-note" style="border-left-color:var(--danger);background:#fdeceb;color:#8a2f2f"><strong>Recovery (Kol ${kol} - ${escapeHtml(kolLabel)}):</strong> Fokus penanganan kredit bermasalah, bukan cross-sell.</div>`);
+    notes.push(`<div class="rec-note" style="border-left-color:var(--danger);background:#fdeceb;color:#8a2f2f"><strong>Recovery (Kol ${kol} - ${escapeHtml(kolLabel)}):</strong> Fokus penanganan kredit bermasalah.</div>`);
   } else if(kol === 2){
     notes.push(`<div class="rec-note" style="border-left-color:var(--warning);background:#fdf3dd;color:#7a5a06"><strong>Monitoring (Kol 2):</strong> Pantau komitmen pembayaran sebelum kualitas memburuk.</div>`);
   } else if(kol === 1 && c.priorityQuad === 'needsVisit'){
@@ -1970,7 +1970,7 @@ function renderOpportunityRecommendations(c){
     } else if(kol === 1 && (c.totalBakiDebet||0) > 0){
       const pct = (c.casaToLoan||0) * 100;
       const ev = c.pipelineEval || {};
-      notes.push(`<div class="rec-note"><strong>Maintain & Monitoring:</strong> CASA to Loan sehat (${fmtDec(pct)}%). Belum ada peluang cross-sell baru terdeteksi, maintain relationship untuk kandidat suplesi ke depannya.</div>`);
+      notes.push(`<div class="rec-note"><strong>Maintain & Monitoring:</strong> CASA to Loan memadai (${fmtDec(pct)}%). Belum ada peluang cross-sell baru terdeteksi, maintain relationship untuk kandidat suplesi ke depannya.</div>`);
     } else {
       notes.push('<div class="rec-note">Tidak ada peluang khusus terdeteksi untuk nasabah ini.</div>');
     }
@@ -2433,8 +2433,8 @@ $('oppKolFilter').addEventListener('change', () => { if(State.activeOpp==='kolWa
    PRIORITAS KUNJUNGAN — CASA to Loan
    ================================================================= */
 const QUAD_DEFS = {
-  needsVisit: {label:'Perlu Kunjungan', color:'#d64545', badgeCls:'k-5', sub:'CASA to Loan di bawah threshold. Diurutkan dari saldo (OS) terkecil & next payment date terdekat.'},
-  sehat:      {label:'CASA Memadai',    color:'#0a9d6e', badgeCls:'k-1', sub:'CASA to Loan sudah di atas threshold. Maintain & deepen relationship.'},
+  needsVisit: {label:'Perlu Kunjungan', color:'#d64545', badgeCls:'k-5', sub:''},
+  sehat:      {label:'CASA Memadai',    color:'#0a9d6e', badgeCls:'k-1', sub:''},
 };
 const QUAD_COLOR = {needsVisit:'#d64545', sehat:'#0a9d6e'};
 function percentile(sortedArr, p){
