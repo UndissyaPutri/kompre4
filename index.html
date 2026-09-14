@@ -625,7 +625,7 @@ table.data-table td.empty{text-align:center}
                   <th class="sortable num" data-sort="worstKol">Kol</th>
                   <th class="sortable num" data-sort="totalPlafon">Plafon</th>
                   <th class="sortable num" data-sort="totalBakiDebet">Baki Debet</th>
-                  <th class="sortable num" data-sort="totalFunding">Total Funding</th>
+                  <th class="sortable num" data-sort="totalCasa">Total CASA</th>
                   <th class="sortable num" data-sort="casaToLoan" title="CASA to Loan: seberapa besar CASA (Tabungan+Giro) menutupi Outstanding (baki debet) pinjaman nasabah.">CASA to Loan ℹ️</th>
                   <th>Fasilitas Dimiliki</th>
                 </tr>
@@ -1572,6 +1572,7 @@ function buildCustomers(){
     c.totalGiro = c.giro.reduce((s,t)=>s+t._balance,0);
     c.totalDeposito = c.deposito.reduce((s,t)=>s+t._principal,0);
     c.totalFunding = c.totalTabungan + c.totalGiro + c.totalDeposito;
+    c.totalCasa = c.totalTabungan + c.totalGiro;
     c.totalMerchantVolume = c.edc.reduce((s,t)=>s+t._volume,0) + c.qris.reduce((s,t)=>s+t._volume,0);
     c.totalMerchantTrx = c.edc.reduce((s,t)=>s+t._trx,0) + c.qris.reduce((s,t)=>s+t._trx,0);
     // CASA to Loan: (Tabungan+Giro) / Baki Debet — deposito sengaja tidak
@@ -1876,7 +1877,7 @@ function renderCustTable(){
         <td class="num"><span class="badge-pill k-${c.worstKol}">Kol ${c.worstKol}</span></td>
         <td class="num">${fmtRupiah(c.totalPlafon)}</td>
         <td class="num">${fmtRupiah(c.totalBakiDebet)}</td>
-        <td class="num">${fmtRupiah(c.totalFunding)}</td>
+        <td class="num">${fmtRupiah(c.totalCasa)}</td>
         <td class="num">${c.casaToLoan!=null ? fmtDec(c.casaToLoan*100)+'%' : '-'}</td>
         <td>${productPills(c)}</td>
       </tr>
