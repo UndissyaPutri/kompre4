@@ -2029,11 +2029,11 @@ function renderRekeningKoranSection(c){
   const partners = lookupRealPartners(c.nama);
   function partnerTable(title, list, variant){
     const rows = list.map(p => `<tr><td>${escapeHtml(p.name)}</td><td class="num">${fmtNum(p.freq)}x</td><td class="num">${fmtRupiah(p.total)}</td></tr>`).join('');
-    return `<div class="table-wrap partner-table ${variant}" style="margin-top:8px"><table class="data-table"><thead><tr><th colspan="3">${title}</th></tr><tr><th>Nama</th><th class="num">Frekuensi</th><th class="num">Total</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+    return `<div class="table-wrap partner-table ${variant}"><table class="data-table"><thead><tr><th colspan="3">${title}</th></tr><tr><th>Nama</th><th class="num">Frekuensi</th><th class="num">Total</th></tr></thead><tbody>${rows}</tbody></table></div>`;
   }
   let partnerBlock;
   if(partners){
-    partnerBlock = partnerTable('Top 5 Pengirim Dana Terbesar (indikasi Buyer)', partners.topBuyers, 'success') + partnerTable('Top 5 Penerima Dana Terbesar (indikasi Supplier)', partners.topSuppliers, 'warning');
+    partnerBlock = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;margin-top:8px">${partnerTable('Top 5 Pengirim Dana Terbesar (indikasi Buyer)', partners.topBuyers, 'success')}${partnerTable('Top 5 Penerima Dana Terbesar (indikasi Supplier)', partners.topSuppliers, 'warning')}</div>`;
   } else if(isReal){
     partnerBlock = '<div class="upload-hint" style="margin-top:8px">Top 5 buyer/supplier belum bisa ditampilkan untuk nasabah ini, mayoritas transaksi pada mutasinya berupa setoran tunai/kode settlement tanpa nama pihak yang jelas, bukan transfer bernama, sehingga tidak cukup andal untuk dijadikan daftar top 5.</div>';
   } else {
