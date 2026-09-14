@@ -1118,7 +1118,7 @@ async function parseFileForSlot(key, file){
 const PIPELINE_THRESHOLDS = {
   casaOptimal:      {casaMin:100000000, freqMin:30,  label:'12 bulan'},
   merchant:         {casaMin:100000000, freqMin:100, label:'6 bulan'},
-  transaksiOptimal: {creditMin:800000000, casaMin:50000000, label:'6 bulan'},
+  transaksiOptimal: {creditMin:800000000, casaMin:50000000, label:'6 bulan', minMonthsUmurRekening:12},
 };
 function seededRand(key){
   let seed = 0;
@@ -1148,6 +1148,35 @@ function generateDummyRekeningKoran(cif, fundingBase){
     };
   });
 }
+// Gabungkan beberapa seri rekening koran (per rekening) jadi satu seri
+// bulanan gabungan (dijumlah per bulan) — dipakai untuk evaluasi pipeline
+// & badge di level nasabah/relationship, bukan per rekening.
+function sumRekeningKoranSeries(seriesList){
+  const byKey = new Map();
+  seriesList.forEach(series => {
+    (series||[]).forEach(e => {
+      const key = `${e.year}-${e.month}`;
+      if(!byKey.has(key)) byKey.set(key, {year:e.year, month:e.month, freq:0, totalCredit:0, totalDebit:0, avgDailyBalance:0, simulated:true});
+      const agg = byKey.get(key);
+      agg.freq += e.freq; agg.totalCredit += e.totalCredit; agg.totalDebit += e.totalDebit; agg.avgDailyBalance += e.avgDailyBalance;
+    });
+  });
+  return [...byKey.values()].sort((a,b) => (a.year-b.year) || (a.month-b.month));
+}
+// Bangun rekening koran per rekening Tabungan/Giro (kalau data rekeningnya
+// tersedia), lalu jumlahkan jadi rekening koran gabungan level nasabah.
+// Kalau nasabah punya data riil (5 nasabah test) atau tidak punya rekening
+// Tabungan/Giro individual (mis. prospek merchant-only EDC/QRIS), tetap
+// pakai simulasi gabungan seperti sebelumnya (accounts:null).
+function buildEntityRekeningKoran(baseKey, nama, accounts, fallbackBase){
+  const real = lookupRealRekeningKoran(nama);
+  if(real) return {rekeningKoran: real, accounts: null};
+  if(accounts && accounts.length){
+    const withSeries = accounts.map(a => ({...a, series: generateDummyRekeningKoran(`${baseKey}|${a.jenis}|${a.noRekening}`, a.balance)}));
+    return {rekeningKoran: sumRekeningKoranSeries(withSeries.map(a=>a.series)), accounts: withSeries};
+  }
+  return {rekeningKoran: generateDummyRekeningKoran(baseKey, fallbackBase), accounts: null};
+}
 function evaluateRekeningKoranPipelines(entity){
   const entries = entity.rekeningKoran || [];
   const n = entries.length;
@@ -1166,7 +1195,11 @@ function evaluateRekeningKoranPipelines(entity){
     avgCasa12, avgFreq12, sumCredit12, sumDebit12, overallAvgCredit, overallAvgDebit,
     casaOptimal: avgCasa12>=PIPELINE_THRESHOLDS.casaOptimal.casaMin && avgFreq12>=PIPELINE_THRESHOLDS.casaOptimal.freqMin,
     merchant: avgCasa6>=PIPELINE_THRESHOLDS.merchant.casaMin && avgFreq6>=PIPELINE_THRESHOLDS.merchant.freqMin,
-    transaksiOptimal: avgCreditMonthly6>=PIPELINE_THRESHOLDS.transaksiOptimal.creditMin && avgCasa6>=PIPELINE_THRESHOLDS.transaksiOptimal.casaMin,
+    // Umur rekening simpanan >12 bulan — diproksikan dari panjang riwayat
+    // rekening koran yang tersedia (n bulan). Kalau riwayatnya belum genap
+    // 12 bulan, dianggap rekeningnya belum cukup umur, jadi tidak lolos
+    // Transaksi Optimal walau kredit & CASA-nya sudah memenuhi.
+    transaksiOptimal: n>=PIPELINE_THRESHOLDS.transaksiOptimal.minMonthsUmurRekening && avgCreditMonthly6>=PIPELINE_THRESHOLDS.transaksiOptimal.creditMin && avgCasa6>=PIPELINE_THRESHOLDS.transaksiOptimal.casaMin,
   };
 }
 function rekKoranMonthLabel(y, m){
@@ -1559,7 +1592,21 @@ function buildCustomers(){
   });
   State.fundingOnlyProspects = [...prospectMap.values()].sort((a,b) => (b.latestOpenDt||'').localeCompare(a.latestOpenDt||''));
   State.fundingOnlyProspects.forEach(p => {
-    p.rekeningKoran = lookupRealRekeningKoran(p.nama) || generateDummyRekeningKoran(p.cif, p.tabunganSum + p.giroSum + p.edcSum + p.qrisSum);
+    // Prospek cuma punya daftar no. rekening + total saldo (bukan saldo per
+    // rekening), jadi saldo dibagi rata ke tiap rekening tabungan/giro-nya.
+    const splitAccts = (jenis, accts, sum) => {
+      const list = (accts||[]).length ? accts : [];
+      if(!list.length) return [];
+      const per = sum/list.length;
+      return list.map(no => ({jenis, noRekening:no, balance:per}));
+    };
+    const accounts = [
+      ...splitAccts('Tabungan', p.tabunganAccts, p.tabunganSum||0),
+      ...splitAccts('Giro', p.giroAccts, p.giroSum||0),
+    ];
+    const built = buildEntityRekeningKoran(p.cif, p.nama, accounts, p.tabunganSum + p.giroSum + p.edcSum + p.qrisSum);
+    p.rekeningKoran = built.rekeningKoran;
+    p.rekeningKoranAccounts = built.accounts;
     p.pipelineEval = evaluateRekeningKoranPipelines(p);
   });
   customers.forEach(c => {
@@ -1587,7 +1634,17 @@ function buildCustomers(){
       ...c.edc.map(m => combinePn(m.pnUser, m.namaUser)),
       ...c.qris.map(m => combinePn(m.pn, m.pnNama)),
     ].filter(v => v && v !== '-'))];
-    c.rekeningKoran = lookupRealRekeningKoran(c.nama) || generateDummyRekeningKoran(c.cif, c.totalFunding);
+    // Rekening koran dibangun per rekening Tabungan/Giro (pakai saldo asli
+    // masing-masing rekening), lalu dijumlah jadi rekening koran gabungan
+    // level nasabah untuk evaluasi pipeline & badge. Deposito tidak
+    // diikutkan karena bukan rekening transaksional.
+    const rkAccounts = [
+      ...c.tabungan.map(t => ({jenis:'Tabungan', noRekening:cleanStr(t.accountNumber)||'-', balance:t._balance||0})),
+      ...c.giro.map(t => ({jenis:'Giro', noRekening:cleanStr(t.accountNumber)||'-', balance:t._balance||0})),
+    ];
+    const builtRk = buildEntityRekeningKoran(c.cif, c.nama, rkAccounts, c.totalFunding);
+    c.rekeningKoran = builtRk.rekeningKoran;
+    c.rekeningKoranAccounts = builtRk.accounts;
     c.pipelineEval = evaluateRekeningKoranPipelines(c);
     // CASA MEMENUHI / TRANSAKSI AKTIF — sama seperti badge di Rekening Koran,
     // dihitung sekali di sini agar bisa dipakai untuk filter di tabel nasabah.
@@ -1978,11 +2035,10 @@ function renderOpportunityRecommendations(c){
   }
   return notes.join('');
 }
-function renderRekeningKoranSection(c){
-  const entries = c.rekeningKoran || [];
-  const ev = c.pipelineEval || evaluateRekeningKoranPipelines(c);
-  const n = ev.monthsCovered || 0;
-  const isReal = entries.length>0 && entries.every(e => e.simulated===false);
+// Satu tabel rekening koran (bulan-per-bulan + baris Total/Rata-rata di
+// bawahnya). Dipakai baik untuk 1 rekening spesifik maupun untuk tampilan
+// gabungan (nasabah yang datanya riil / tidak punya rekening individual).
+function renderRekKoranTable(entries){
   const monthRows = entries.map(e => `
     <tr>
       <td>${rekKoranMonthLabel(e.year, e.month)}</td>
@@ -1992,15 +2048,40 @@ function renderRekeningKoranSection(c){
       <td class="num">${fmtRupiah(e.avgDailyBalance)}</td>
     </tr>
   `).join('');
-  const totalRow = monthRows ? `
+  if(!monthRows){
+    return '<div class="table-wrap"><table class="data-table"><thead><tr><th>Bulan</th><th class="num">Freq Transaksi</th><th class="num">Total Kredit</th><th class="num">Total Debit</th><th class="num">Ratas Saldo (CASA)</th></tr></thead><tbody><tr><td colspan="5" class="empty">Belum ada data rekening koran.</td></tr></tbody></table></div>';
+  }
+  const tev = evaluateRekeningKoranPipelines({rekeningKoran:entries});
+  const totalRow = `
     <tr style="font-weight:700;border-top:2px solid var(--border,#ccc)">
-      <td>Total / Rata-rata (${ev.monthsCasaWindow||n} Bulan)</td>
-      <td class="num">${fmtDec(ev.avgFreq12||0)}x/bln</td>
-      <td class="num">${fmtRupiah(Math.round(ev.sumCredit12||0))}</td>
-      <td class="num">${fmtRupiah(Math.round(ev.sumDebit12||0))}</td>
-      <td class="num">${fmtRupiah(Math.round(ev.avgCasa12||0))}</td>
-    </tr>` : '';
-  const rows = (monthRows + totalRow) || '<tr><td colspan="5" class="empty">Belum ada data rekening koran untuk nasabah ini.</td></tr>';
+      <td>Total / Rata-rata (${tev.monthsCasaWindow||tev.monthsCovered||0} Bulan)</td>
+      <td class="num">${fmtDec(tev.avgFreq12||0)}x/bln</td>
+      <td class="num">${fmtRupiah(Math.round(tev.sumCredit12||0))}</td>
+      <td class="num">${fmtRupiah(Math.round(tev.sumDebit12||0))}</td>
+      <td class="num">${fmtRupiah(Math.round(tev.avgCasa12||0))}</td>
+    </tr>`;
+  return `<div class="table-wrap"><table class="data-table"><thead><tr><th>Bulan</th><th class="num">Freq Transaksi</th><th class="num">Total Kredit</th><th class="num">Total Debit</th><th class="num">Ratas Saldo (CASA)</th></tr></thead><tbody>${monthRows}${totalRow}</tbody></table></div>`;
+}
+function renderRekeningKoranSection(c){
+  const entries = c.rekeningKoran || [];
+  const ev = c.pipelineEval || evaluateRekeningKoranPipelines(c);
+  const n = ev.monthsCovered || 0;
+  const isReal = entries.length>0 && entries.every(e => e.simulated===false);
+  // Kalau ada breakdown per rekening (Tabungan/Giro), tampilkan tabel
+  // terpisah untuk tiap rekening. Kalau tidak (data riil gabungan, atau
+  // nasabah/prospek tanpa rekening Tabungan/Giro individual), tampilkan
+  // satu tabel gabungan seperti sebelumnya.
+  let rekTablesHtml;
+  if(c.rekeningKoranAccounts && c.rekeningKoranAccounts.length){
+    rekTablesHtml = c.rekeningKoranAccounts.map(a => `
+      <div style="margin-top:10px">
+        <div class="detail-section-title" style="font-size:13px;margin:0 0 6px">${escapeHtml(a.jenis)} · No Rekening ${escapeHtml(String(a.noRekening))} <span class="sim-tag">SIMULASI</span></div>
+        ${renderRekKoranTable(a.series)}
+      </div>
+    `).join('');
+  } else {
+    rekTablesHtml = `<div style="margin-top:10px">${renderRekKoranTable(entries)}</div>`;
+  }
 
   // CASA MEMENUHI / TRANSAKSI AKTIF — dua indikator sederhana pengganti
   // badge Pipeline SME lama, dihitung langsung di sini agar bekerja untuk
@@ -2047,17 +2128,17 @@ function renderRekeningKoranSection(c){
           <strong>Rekening Koran${isReal ? '' : ' <span class="sim-tag">SIMULASI</span>'}</strong>
         </div>
       </div>
-      <div class="table-wrap"><table class="data-table"><thead><tr><th>Bulan</th><th class="num">Freq Transaksi</th><th class="num">Total Kredit</th><th class="num">Total Debit</th><th class="num">Ratas Saldo (CASA)</th></tr></thead><tbody>${rows}</tbody></table></div>
+      ${rekTablesHtml}
       <div class="stats-grid" style="margin-top:12px;margin-bottom:0">
         <div class="stat-card success">
           <div class="stat-label">Rata-rata Kredit / Bulan</div>
           <div class="stat-value">${fmtRupiah(Math.round(ev.overallAvgCredit||0))}</div>
-          <div class="stat-sub">${n} bulan${isReal?'':' simulasi'}</div>
+          <div class="stat-sub">${n} bulan${isReal?'':' simulasi'} · gabungan semua rekening</div>
         </div>
         <div class="stat-card warning">
           <div class="stat-label">Rata-rata Debit / Bulan</div>
           <div class="stat-value">${fmtRupiah(Math.round(ev.overallAvgDebit||0))}</div>
-          <div class="stat-sub">${n} bulan${isReal?'':' simulasi'}</div>
+          <div class="stat-sub">${n} bulan${isReal?'':' simulasi'} · gabungan semua rekening</div>
         </div>
       </div>
       ${partnerBlock}
